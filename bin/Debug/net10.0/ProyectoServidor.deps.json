@@ -1,0 +1,23 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v10.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v10.0": {
+      "ProyectoServidor/1.0.0": {
+        "runtime": {
+          "ProyectoServidor.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "ProyectoServidor/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

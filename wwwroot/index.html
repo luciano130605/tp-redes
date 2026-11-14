@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ejemplo de Página HTML</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>Bienvenido a mi página web</h1>
+    </header>
+    <div class="centrado">
+
+
+    <main>
+        <p>Este es un ejemplo de una página HTML con CSS y JavaScript incluidos.</p>
+        <img src="gif5seg.gif" alt="Descripción de la imagen">
+        <br>
+        <button id="myButton">Haz clic aquí</button>
+    </main>
+
+
+<div class="tarjeta">
+    <h1>Una solicitud</h1>
+<div class="formulario">
+
+    <div class="campo">
+        <label for="nombre">Nombre</label>
+        <input type="text" id="nombre">
+    </div>
+    <div class="campo">
+        <label for="edad">Edad</label>
+        <input type="text" id="edad">
+    </div>
+    <button class="miBoton" onclick="enviarFormulario()" id="botonFormulario">Enviar formulario</button>
+
+    <p id="textoAMostrar1"></p>
+</div>
+</div>
+
+<div class="tarjeta">
+<h1>Multiples solicitudes</h1>
+<div class="formulario">
+
+    <div class="campo">
+        <label for="nombre">Cantidad de solicitudes</label>
+        <input type="text" id="cantidadS">
+    </div>
+    <br>
+    <div class="campo">
+        <label for="edad">Nombre</label>
+        <input type="text" id="nombreMultiple">
+    </div>
+    <br>    
+    <button class="miBoton" onclick="multiplesSolicitudes()" id="botonMultiple">Enviar solicitudes</button>
+
+    <p id="textoAMostrar3"></p>
+</div>
+</div>
+
+<div class="divComun">
+
+
+    <button onclick="probarMetodo('GET')">Este boton envia una solicitud de tipo GET</button>
+    <button onclick="probarMetodo('POST')">Este boton envia una solicitud de tipo POST</button>
+
+    <br>
+
+    <button onclick="probarMetodo('DELETE')">Este boton envia una solicitud de tipo DELETE</button>
+    <button onclick="probarMetodo('PUT')">Este boton envia una solicitud de tipo PUT</button>
+
+    <p id="textoAMostrar2"></p>
+    
+
+
+
+</div>
+
+
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

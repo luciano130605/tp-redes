@@ -1,0 +1,106 @@
+* {
+    font-family: Arial, Helvetica, sans-serif;
+    color: white
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: rgb(25 25 25 / 100);
+    margin: 0;
+    padding: 0;
+}
+
+header {
+    background-color: #008CBA;
+    color: white;
+    padding: 1em;
+    text-align: center;
+}
+
+main {
+    padding: 1em;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 1em 0 auto;
+}
+
+button {
+    background-color: #008CBA;
+    color: white;
+    border: none;
+    padding: 1em;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #006494;
+}
+
+.centrado {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    align-self: center;
+    justify-content: center;
+}
+
+.miBoton {
+    background-color: #008CBA;
+    color: white;
+    border: none;
+    padding: 1em;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    cursor: pointer;
+
+}
+
+.formulario {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-end;   /* el botón queda alineado con los inputs */
+    gap: 1em;
+    
+}
+
+.campo {
+    display: flex;
+    flex-direction: column;  /* label arriba, input abajo */
+}
+
+input {
+    color: black;            /* tu regla * pone todo en blanco y el texto no se vería */
+    padding: 0.5em;
+}
+
+.divComun {
+    margin-top: 2%;
+}
+
+.seccion {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.tarjeta {
+    border-radius: 20px;
+    border-color: white;
+    border: #006494;
+    border-style: solid;
+    padding: 2.5%;
+    margin-top: 1%;
+    margin-bottom: 0;
+}

@@ -1,0 +1,199 @@
+GUIA PARA DEFENDER EL PROYECTO FINAL: SERVIDOR WEB EN .NET
+==========================================================
+
+1. PRESENTACION EN 30 SEGUNDOS
+------------------------------
+"Hice un servidor web HTTP/1.1 sobre sockets TCP usando TcpListener, sin
+Kestrel ni HttpListener, para manejar yo mismo el protocolo. Cada conexion
+se atiende en una Task independiente (Thread Pool / TPL) con async/await.
+Los logs se escriben con el patron Productor-Consumidor. Las respuestas se
+comprimen con GZipStream o DeflateStream segun el header Accept-Encoding.
+La configuracion (puerto y carpeta) viene de un config.json externo."
+
+
+2. FLUJO DE UNA SOLICITUD (para explicarlo en orden)
+----------------------------------------------------
+1) RunAsync crea el TcpListener (socket + bind), llama a Start (listen) y
+   queda en un bucle con AcceptTcpClientAsync (accept).
+2) Por cada cliente aceptado se lanza Task.Run(HandleClientAsync). El bucle
+   vuelve enseguida a aceptar otra conexion, por eso no hay limite de
+   clientes simultaneos.
+3) HandleClientAsync lee del NetworkStream con un StreamReader:
+   a) la linea de solicitud ("GET /ruta?x=1 HTTP/1.1"),
+   b) los headers hasta la linea en blanco,
+   c) el body, solo si es POST, usando Content-Length.
+4) BuildResponseAsync decide que responder: archivo (200), no encontrado
+   (404) o metodo no soportado (405).
+5) SendAsync arma los headers, comprime el contenido si el cliente lo
+   acepta, y escribe todo en el NetworkStream.
+6) En el bloque finally se loguea la solicitud (IP, metodo, URL, status,
+   bytes, query y body) y se cierra la conexion.
+
+
+3. COMO CUMPLE CADA REQUISITO
+-----------------------------
+Req 1 - Concurrencia indefinida
+  Una Task por conexion con Task.Run, ejecutada por el Thread Pool. Todo el
+  acceso a red y disco es asincrono (async/await), asi que no se bloquea un
+  hilo por cliente. El trabajo es I/O-bound, por eso async es la eleccion
+  correcta. No uso SemaphoreSlim para limitar porque el enunciado pide
+  atender un numero indefinido de solicitudes.
+
+Req 2 - index.html por defecto
+  En BuildResponseAsync, si la ruta es "/" o termina en "/", se agrega
+  "index.html" antes de buscar el archivo.
+
+Req 3 y 4 - Carpeta y puerto configurables
+  config.json se deserializa con System.Text.Json a la clase ServerConfig
+  (Port, WwwRoot, LogDirectory). Si el archivo no existe, se usan valores
+  por defecto (8080, wwwroot, logs). Tambien se puede pasar otra ruta de
+  config como argumento.
+
+Req 5 - Error 404 personalizado
+  Si el archivo no existe, devuelve status 404 con el contenido de
+  wwwroot/404.html. Si ese archivo tampoco existe, usa un HTML minimo
+  embebido en el codigo.
+
+Req 6 - GET y POST
+  GET sirve archivos. En POST se lee el body segun Content-Length y solo se
+  loguea. Despues responde igual que un GET. Otros metodos devuelven 405.
+
+Req 7 - Parametros de consulta
+  Se separa la URL en el '?', se parsea con HttpUtility.ParseQueryString y
+  se loguean como clave=valor. No se usan para nada mas.
+
+Req 8 - Compresion
+  Si Accept-Encoding incluye gzip se usa GZipStream; si no, y acepta
+  deflate, DeflateStream. Se agregan los headers Content-Encoding y Vary.
+  Es un ejemplo del patron Decorador de streams: el compresor envuelve a un
+  MemoryStream.
+
+Req 9 - Log diario con IP
+  DailyLogger escribe en logs/yyyy-MM-dd.log. La IP sale de
+  client.Client.RemoteEndPoint. Cada linea incluye hora, IP, metodo, URL,
+  status, bytes, query y body.
+
+
+4. CONCEPTOS DE LA CLASE QUE APARECEN EN EL CODIGO
+--------------------------------------------------
+- Sockets API: TcpListener encapsula socket, bind, listen y accept. Es un
+  socket de flujo (Stream Socket) sobre TCP.
+- Modelo cliente-servidor y HTTP: se parsea a mano la solicitud y se arma
+  a mano la respuesta (status line, headers, body).
+- TPL y Thread Pool: Task.Run delega cada conexion al Thread Pool.
+- Asincrono y no bloqueante: await libera el hilo mientras espera red o
+  disco.
+- Productor-Consumidor: los hilos de las solicitudes producen lineas de log
+  y un unico hilo consumidor las escribe (BlockingCollection).
+- Thread safety y race condition: si cada hilo escribiera el archivo de log
+  directamente podrian pisarse. La cola serializa las escrituras sin que
+  las solicitudes esperen al disco.
+- Interlocked: los contadores _activeConnections y _totalRequests se
+  modifican de forma atomica sin lock.
+- Streams: NetworkStream, StreamReader, MemoryStream, GZipStream,
+  DeflateStream.
+- Seguridad en servidores: validacion de entradas (path traversal),
+  allowlist de extensiones, limite de tamano del body, timeout por
+  conexion, y limpieza de saltos de linea en el log.
+
+
+5. PREGUNTAS PROBABLES Y RESPUESTAS
+-----------------------------------
+P: Por que TcpListener y no HttpListener o Kestrel?
+R: Porque la materia trabaja con la API de sockets y el protocolo HTTP.
+   Con TcpListener implemento yo el parseo de HTTP, que es lo que se
+   quiere demostrar. Kestrel resolveria todo solo.
+
+P: Como atiende varios clientes a la vez?
+R: El bucle de accept no procesa la solicitud: solo acepta y lanza una Task
+   por cliente. Las Tasks corren en el Thread Pool y usan async/await, asi
+   que miles de conexiones esperando I/O no ocupan miles de hilos.
+
+P: Por que no creaste un Thread por cliente?
+R: Es costoso en memoria y en cambios de contexto. El Thread Pool reutiliza
+   hilos y async/await evita bloquearlos mientras esperan I/O.
+
+P: Que pasa si dos solicitudes loguean al mismo tiempo?
+R: Ambas agregan su linea a la BlockingCollection, que es thread-safe. Un
+   solo hilo consumidor escribe en el archivo, asi que no hay race
+   condition ni necesidad de lock.
+
+P: Para que sirve Interlocked?
+R: Para incrementar y decrementar contadores compartidos de forma atomica.
+   Un simple "x++" no es atomico (leer, sumar, escribir) y podria perder
+   actualizaciones entre hilos.
+
+P: Por que el StreamReader usa Latin1?
+R: Porque con Latin1 cada caracter equivale a exactamente un byte. Asi la
+   cantidad de caracteres leidos coincide con el Content-Length, que se
+   mide en bytes. Despues el body se decodifica como UTF-8 para loguearlo.
+
+P: Como evitas que pidan archivos fuera de la carpeta, como ../../secreto?
+R: Calculo la ruta absoluta con Path.GetFullPath y verifico que empiece con
+   la ruta de la carpeta raiz. Si no, devuelvo 404 (no revelo que existe).
+   Ademas solo sirvo extensiones que estan en la allowlist de MIME types.
+
+P: Que pasa si un cliente se conecta y no envia nada?
+R: Cada conexion tiene un CancellationTokenSource con timeout de 15
+   segundos. Si vence, se cancela la lectura y se libera la conexion. Evita
+   que clientes lentos acumulen recursos (inanicion).
+
+P: Por que el Content-Type es importante?
+R: El navegador decide que hacer segun ese header. Si el CSS llega como
+   text/plain, no lo aplica. Si el JS llega con tipo incorrecto, no lo
+   ejecuta.
+
+P: Como sabe el servidor si puede comprimir?
+R: Lee el header Accept-Encoding del cliente. Si el cliente no lo envia, la
+   respuesta va sin comprimir. Content-Length se calcula sobre los bytes ya
+   comprimidos.
+
+P: Que significa Connection: close?
+R: Que atiendo una solicitud por conexion y despues cierro. HTTP/1.1
+   permite conexiones persistentes (keep-alive), pero implementarlas
+   requiere un bucle por conexion y manejo de timeouts. Lo dejo como mejora.
+
+P: Es escalable?
+R: Verticalmente si, porque usa async y el Thread Pool. Horizontalmente
+   habria que poner un balanceador de carga delante de varias instancias, y
+   el log por instancia deberia centralizarse.
+
+
+6. LIMITACIONES CONOCIDAS (decilas vos antes de que pregunten)
+--------------------------------------------------------------
+- Una solicitud por conexion (sin keep-alive ni pipelining).
+- No soporta HEAD, PUT, DELETE (responde 405).
+- Lee el archivo completo en memoria antes de enviarlo; para archivos muy
+  grandes convendria usar FileStream y enviar en bloques.
+- Comprime tambien imagenes (.png, .jpg), que ya estan comprimidas y casi
+  no ganan nada. Se podria excluir.
+- No soporta HTTPS/TLS. Para eso haria falta SslStream.
+- No hay limite de conexiones simultaneas, como pide el enunciado. En
+  produccion convendria poner un tope (por ejemplo con SemaphoreSlim) para
+  proteger al servidor.
+- El body de POST se corta en 1 MB por seguridad.
+
+
+7. DEMOSTRACION SUGERIDA EN VIVO
+--------------------------------
+1) dotnet run y abrir http://localhost:8080/ (se ve el index con estilo).
+2) Mostrar config.json, cambiar el puerto, reiniciar y volver a probar.
+3) Abrir /noexiste.html para mostrar el 404 personalizado.
+4) Abrir /?nombre=Juan&edad=20 y mostrar el log.
+5) Abrir /test.html, enviar el formulario y mostrar el body en el log.
+6) curl -i --compressed http://localhost:8080/ para ver Content-Encoding.
+7) Lanzar 100 curl en paralelo y mostrar que el log los registra a todos:
+     for i in {1..100}; do curl -s localhost:8080/ > /dev/null & done
+8) Abrir logs/AAAA-MM-DD.log y senalar la IP de origen en cada linea.
+9) Probar un intento de traversal:
+     curl --path-as-is http://localhost:8080/../config.json   -> 404
+
+
+8. CONSEJOS PARA LA EXPOSICION
+------------------------------
+- Explica el flujo (seccion 2) antes de entrar en el codigo.
+- Nombra el concepto de clase cada vez que muestres una parte del codigo.
+- Admiti las limitaciones con naturalidad y proponé la mejora.
+- Asegurate de poder explicar cada linea: si el profesor senala algo y no
+  sabes por que esta, es mejor decir "lo hice para...". Lee el codigo
+  completo al menos una vez antes de presentar.

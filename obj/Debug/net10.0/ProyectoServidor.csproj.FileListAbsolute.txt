@@ -1,0 +1,14 @@
+C:\Users\facun\Desktop\redes\pdf de redes\claudeConConsiga\bin\Debug\net10.0\ProyectoServidor.exe
+C:\Users\facun\Desktop\redes\pdf de redes\claudeConConsiga\bin\Debug\net10.0\ProyectoServidor.deps.json
+C:\Users\facun\Desktop\redes\pdf de redes\claudeConConsiga\bin\Debug\net10.0\ProyectoServidor.runtimeconfig.json
+C:\Users\facun\Desktop\redes\pdf de redes\claudeConConsiga\bin\Debug\net10.0\ProyectoServidor.dll
+C:\Users\facun\Desktop\redes\pdf de redes\claudeConConsiga\bin\Debug\net10.0\ProyectoServidor.pdb
+C:\Users\facun\Desktop\redes\pdf de redes\claudeConConsiga\obj\Debug\net10.0\ProyectoServidor.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\facun\Desktop\redes\pdf de redes\claudeConConsiga\obj\Debug\net10.0\ProyectoServidor.AssemblyInfoInputs.cache
+C:\Users\facun\Desktop\redes\pdf de redes\claudeConConsiga\obj\Debug\net10.0\ProyectoServidor.AssemblyInfo.cs
+C:\Users\facun\Desktop\redes\pdf de redes\claudeConConsiga\obj\Debug\net10.0\ProyectoServidor.csproj.CoreCompileInputs.cache
+C:\Users\facun\Desktop\redes\pdf de redes\claudeConConsiga\obj\Debug\net10.0\ProyectoServidor.dll
+C:\Users\facun\Desktop\redes\pdf de redes\claudeConConsiga\obj\Debug\net10.0\refint\ProyectoServidor.dll
+C:\Users\facun\Desktop\redes\pdf de redes\claudeConConsiga\obj\Debug\net10.0\ProyectoServidor.pdb
+C:\Users\facun\Desktop\redes\pdf de redes\claudeConConsiga\obj\Debug\net10.0\ProyectoServidor.genruntimeconfig.cache
+C:\Users\facun\Desktop\redes\pdf de redes\claudeConConsiga\obj\Debug\net10.0\ref\ProyectoServidor.dll
